@@ -1,0 +1,15 @@
+{
+  "$schema": "https://dl.viam.dev/module.schema.json",
+  "module_id": "pulltorefresh:ruddermotor",
+  "visibility": "private",
+  "url": "https://github.com/ChrisPullToRefresh/ruddermotor",
+  "description": "A rudder motor that can reset to an angle of zero using a magnet sensor",
+  "models": [
+    {
+      "api": "rdk:component:motor",
+      "model": "pulltorefresh:ruddermotor:ruddermotor"
+    }
+  ],
+  "entrypoint": "bin/custommotor"
+}
+

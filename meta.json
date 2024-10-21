@@ -3,7 +3,7 @@
   "module_id": "pulltorefresh:ruddermotor",
   "visibility": "private",
   "url": "https://github.com/ChrisPullToRefresh/ruddermotor",
-  "description": "A rudder motor that can reset to an angle of zero using a magnet sensor",
+  "description": "A rudder motor that can reset to an angle of zero using a magnet",
   "models": [
     {
       "api": "rdk:component:motor",

@@ -1,5 +1,4 @@
-// Package customsensor implements a sensor where all methods are unimplemented.
-// It extends the built-in resource subtype sensor and implements methods to handle resource construction and attribute configuration.
+// Package custommotor implements a motor
 // TODO: rename if needed (i.e., custommotor)
 package custummotor
 
@@ -20,8 +19,8 @@ import (
 	"go.viam.com/utils"
 )
 
-// Here is where we define your new model's colon-delimited-triplet (viam-labs:go-module-templates-sensor:customsensor)
-// viam-labs = namespace, go-module-templates-sensor = repo-name, customsensor = model name.
+// Here is where we define your new model's colon-delimited-triplet (viam-labs:go-module-templates-motor:custommotor)
+// viam-labs = namespace, go-module-templates-motor = repo-name, custommotor = model name.
 // TODO: Change model namespace, family (often the repo-name), and model. For more information see https://docs.viam.com/registry/create/#name-your-new-resource-model
 var (
 	Model            = resource.NewModel("pulltorefresh", "ruddermotor", "ruddermotor")
@@ -79,8 +78,8 @@ func (cfg *Config) Validate(path string) ([]string, error) {
 	return []string{}, nil
 }
 
-// Constructor for a custom sensor that creates and returns a customSensor.
-// TODO: update the customSensor struct and the initialization, and rename it
+// Constructor for a custom motor that creates and returns a customMotor.
+// TODO: update the customMotor struct and the initialization, and rename it
 // if needed (i.e., newCustomMotor)
 func newCustomMotor(ctx context.Context, deps resource.Dependencies, rawConf resource.Config, logger logging.Logger) (motor.Motor, error) {
 	// This takes the generic resource.Config passed down from the parent and converts it to the
@@ -90,7 +89,7 @@ func newCustomMotor(ctx context.Context, deps resource.Dependencies, rawConf res
 		return nil, err
 	}
 
-	// Create a cancelable context for custom sensor
+	// Create a cancelable context for custom motor
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 
 	m := &customMotor{
@@ -104,7 +103,7 @@ func newCustomMotor(ctx context.Context, deps resource.Dependencies, rawConf res
 
 	// TODO: If your custom component has dependencies, perform any checks you need to on them.
 
-	// The Reconfigure() method changes the values on the customSensor based on the attributes in the component config
+	// The Reconfigure() method changes the values on the customMotor based on the attributes in the component config
 	if err := m.Reconfigure(ctx, deps, rawConf); err != nil {
 		logger.Error("Error configuring module with ", rawConf)
 		return nil, err
@@ -116,7 +115,7 @@ func newCustomMotor(ctx context.Context, deps resource.Dependencies, rawConf res
 	return m, nil
 }
 
-// TODO: update the customSensor struct with any fields you require and
+// TODO: update the customMotor struct with any fields you require and
 // rename the struct as needed (i.e., customMotor)
 type customMotor struct {
 	name   resource.Name
@@ -290,7 +289,7 @@ func (m *customMotor) Name() resource.Name {
 	return m.name
 }
 
-// Reconfigures the model. Most models can be reconfigured in place without needing to rebuild. If you need to instead create a new instance of the sensor, throw a NewMustBuildError.
+// Reconfigures the model. Most models can be reconfigured in place without needing to rebuild. If you need to instead create a new instance of the motor, throw a NewMustBuildError.
 // TODO: rename as appropriate, i.e. m *customMotor
 func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencies, conf resource.Config) error {
 	m.opMgr.CancelRunning(ctx)
@@ -316,7 +315,7 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 	return nil
 }
 
-// DoCommand is a place to add additional commands to extend the sensor API. This is optional.
+// DoCommand is a place to add additional commands to extend the motor API. This is optional.
 // TODO: rename as appropriate (i.e., motorConfig)
 func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {
 	m.logger.Error("DoCommand method unimplemented")

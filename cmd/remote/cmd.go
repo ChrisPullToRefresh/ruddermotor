@@ -12,7 +12,6 @@ import (
 	"go.viam.com/rdk/resource"
 	robotimpl "go.viam.com/rdk/robot/impl"
 	"go.viam.com/rdk/robot/web"
-	_ "go.viam.com/rdk/services/sensors/builtin"
 	rdkutils "go.viam.com/rdk/utils"
 	"go.viam.com/utils"
 

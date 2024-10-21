@@ -60,7 +60,7 @@ The simplest way of testing your motor, is to run a version of `viam-server` wit
 1. Edit the [`cmd/remote/cmd.go` file](./cmd/remote/cmd.go). The code there should configure and run a robot with your modular resource configured.
 1. Run `make bin/remoteserver` to compile the [`cmd/remote/cmd.go` file](./cmd/module/cmd.go).
 1. Run `./bin/remoteserver my_motor_name` and specify any additional commandline arguments that your code passes  to the modular resource attributes. This will instantiate a simplified instance of `viam-server` with your modular resource.
-1. In this case currently: `./bin/remoteserver winchmotor 1 two board-1`
+1. In this case currently: `./bin/remoteserver ruddermotor board-1`
 
 ##### Test your motor with an operational machine
 

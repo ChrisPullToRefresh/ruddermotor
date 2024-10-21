@@ -27,15 +27,6 @@ var (
 	errUnimplemented = errors.New("unimplemented")
 )
 
-const (
-// winchCwPin            = "35"
-// winchCcwPin           = "37"
-// winchPwmFrequency     = 500
-// winchStopPwmDutyCycle = 0
-// winchSlowPwmDutyCycle = 0.2
-// winchFastPwmDutyCycle = 1.0
-)
-
 type rudderState string
 
 const (

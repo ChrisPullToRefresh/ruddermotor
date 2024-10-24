@@ -1,3 +1,4 @@
 {
   "board": "board-1"
+  "encoderResetStraight": "encoder-resetstraight"
 }

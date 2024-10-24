@@ -12,6 +12,7 @@ import (
 	// TODO: update to the interface you'll implement
 	"go.viam.com/rdk/components/board"
 	"go.viam.com/rdk/components/motor"
+	"go.viam.com/rdk/components/sensor"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/operation"
 	"go.viam.com/rdk/resource"
@@ -54,7 +55,8 @@ func init() {
 // TODO: Change the Config struct to contain any values that you would like to be able to configure from the attributes field in the component
 // configuration. For more information see https://docs.viam.com/build/configure/#components
 type Config struct {
-	Board string `json:"board"`
+	Board                string `json:"board"`
+	EncoderResetStraight string `json:"encoderResetStraight"`
 }
 
 // Validate validates the config and returns implicit dependencies.
@@ -119,6 +121,7 @@ type customMotor struct {
 	opMgr      *operation.SingleOperationManager
 
 	b        board.Board
+	ers      sensor.Sensor
 	rs       rudderState
 	powerPct float64
 }
@@ -299,9 +302,15 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 
 	m.b, err = board.FromDependencies(deps, motorConfig.Board)
 	if err != nil {
-		return fmt.Errorf("unable to get motor %v for %v", motorConfig.Board, m.name)
+		return fmt.Errorf("unable to get board %v for %v", motorConfig.Board, m.name)
 	}
 	m.logger.Info("board is now configured to ", m.b.Name())
+
+	m.ers, err = sensor.FromDependencies(deps, motorConfig.EncoderResetStraight)
+	if err != nil {
+		return fmt.Errorf("unable to get sensor %v for %v", motorConfig.EncoderResetStraight, m.name)
+	}
+	m.logger.Info("encoder-resetstraight is now configured to ", m.ers.Name())
 
 	return nil
 }

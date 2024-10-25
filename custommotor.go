@@ -164,11 +164,14 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 
 // ResetZeroPosition implements motor.Motor.
 func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, extra map[string]interface{}) error {
+	m.logger.Infof("Begin ResetZeroPosition")
 	if (m.rs != ccwRudderState) && (m.rs != cwRudderState) {
 		return fmt.Errorf("can only call ResetZeroPosition when turning. current rudder state = %v", m.rs)
 	}
+	m.logger.Infof("current power: %v", m.powerPct)
 	newPowerPct := -m.powerPct
-
+	m.logger.Infof("new power: %v", newPowerPct)
+	m.Stop(ctx, nil)
 	m.SetPower(ctx, newPowerPct, nil)
 	// TODO: implement as a go function and store the cancel function in custommotor
 	m.mu.Lock()

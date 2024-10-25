@@ -11,8 +11,8 @@ import (
 
 	// TODO: update to the interface you'll implement
 	"go.viam.com/rdk/components/board"
+	"go.viam.com/rdk/components/encoder"
 	"go.viam.com/rdk/components/motor"
-	"go.viam.com/rdk/components/sensor"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/operation"
 	"go.viam.com/rdk/resource"
@@ -121,7 +121,7 @@ type customMotor struct {
 	opMgr      *operation.SingleOperationManager
 
 	b        board.Board
-	ers      sensor.Sensor
+	ers      encoder.Encoder
 	rs       rudderState
 	powerPct float64
 }
@@ -163,7 +163,7 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 
 // ResetZeroPosition implements motor.Motor.
 func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, extra map[string]interface{}) error {
-	/*if (m.rs != ccwRudderState) && (m.rs != cwRudderState) {
+	if (m.rs != ccwRudderState) && (m.rs != cwRudderState) {
 		return fmt.Errorf("can only call ResetZeroPosition when turning. current rudder state = %v", m.rs)
 	}
 	newPowerPct := -m.powerPct
@@ -171,17 +171,23 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	m.SetPower(ctx, newPowerPct, nil)
 	// TODO: implement as a go function and store the cancel function in custommotor
 	m.mu.Lock()
-	defer m.mu.Unlock()
-	//for {
-	readings, err := m.ers.Readings(ctx, nil)
-	if err != nil {
-		m.logger.Error(err)
-		return err
+	startTicks := -1.0
+	for {
+		ticks, _, err := m.ers.Position(ctx, encoder.PositionTypeTicks, nil)
+		if err != nil {
+			m.logger.Error(err)
+			return err
+		}
+		if startTicks < 0 {
+			startTicks = ticks
+			m.logger.Infof("encoder set straight startTicks: %v", startTicks)
+		} else if startTicks != ticks {
+			m.logger.Infof("encoder set straight end turn ticks: %v", startTicks)
+			break
+		}
 	}
-	m.logger.Infof("encoder set straight: %v", readings)
-	return nil
-	*/
-	//}
+	m.mu.Unlock()
+	m.Stop(ctx, nil)
 	return nil
 }
 
@@ -324,9 +330,9 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 	}
 	m.logger.Info("board is now configured to ", m.b.Name())
 
-	m.ers, err = sensor.FromDependencies(deps, motorConfig.EncoderResetStraight)
+	m.ers, err = encoder.FromDependencies(deps, motorConfig.EncoderResetStraight)
 	if err != nil {
-		return fmt.Errorf("unable to get sensor %v for %v", motorConfig.EncoderResetStraight, m.name)
+		return fmt.Errorf("unable to get encoder %v for %v", motorConfig.EncoderResetStraight, m.name)
 	}
 	m.logger.Info("encoder-resetstraight is now configured to ", m.ers.Name())
 

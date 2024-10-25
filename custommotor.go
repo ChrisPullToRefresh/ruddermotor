@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"sync"
+	"time"
 
 	// TODO: update to the interface you'll implement
 	"go.viam.com/rdk/components/board"
@@ -172,23 +173,33 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	// TODO: implement as a go function and store the cancel function in custommotor
 	m.mu.Lock()
 	startTicks := -1.0
+	timer := time.After(1 * time.Second)
 	for {
-		ticks, _, err := m.ers.Position(ctx, encoder.PositionTypeTicks, nil)
-		if err != nil {
-			m.logger.Error(err)
-			return err
-		}
-		if startTicks < 0 {
-			startTicks = ticks
-			m.logger.Infof("encoder set straight startTicks: %v", startTicks)
-		} else if startTicks != ticks {
-			m.logger.Infof("encoder set straight end turn ticks: %v", startTicks)
-			break
+		select {
+		case <-timer:
+			m.mu.Unlock()
+			m.Stop(ctx, nil)
+			return fmt.Errorf("timed out of ResetZeroPosition")
+		default:
+			ticks, _, err := m.ers.Position(ctx, encoder.PositionTypeTicks, nil)
+			if err != nil {
+				m.logger.Error(err)
+				m.mu.Unlock()
+				m.Stop(ctx, nil)
+				return err
+			}
+			if startTicks < 0 {
+				startTicks = ticks
+				m.logger.Infof("encoder set straight startTicks: %v", startTicks)
+			} else if startTicks != ticks {
+				m.logger.Infof("encoder set straight end turn ticks: %v", startTicks)
+				m.mu.Unlock()
+				m.Stop(ctx, nil)
+				return nil
+			}
+			time.Sleep(time.Millisecond * 10)
 		}
 	}
-	m.mu.Unlock()
-	m.Stop(ctx, nil)
-	return nil
 }
 
 func (m *customMotor) setPin(pinName string, high bool) {

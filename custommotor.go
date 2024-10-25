@@ -163,7 +163,7 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 
 // ResetZeroPosition implements motor.Motor.
 func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, extra map[string]interface{}) error {
-	if (m.rs != ccwRudderState) && (m.rs != cwRudderState) {
+	/*if (m.rs != ccwRudderState) && (m.rs != cwRudderState) {
 		return fmt.Errorf("can only call ResetZeroPosition when turning. current rudder state = %v", m.rs)
 	}
 	newPowerPct := -m.powerPct
@@ -180,7 +180,9 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	}
 	m.logger.Infof("encoder set straight: %v", readings)
 	return nil
+	*/
 	//}
+	return nil
 }
 
 func (m *customMotor) setPin(pinName string, high bool) {

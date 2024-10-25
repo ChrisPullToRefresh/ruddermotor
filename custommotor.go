@@ -360,6 +360,7 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			command := value.(string)
 			if command == "smallLeft" {
 				m.SetPower(ctx, rudderSlowPwmDutyCycle, nil)
+				time.Sleep(time.Millisecond * 500)
 				m.ResetZeroPosition(ctx, 0, nil)
 				return nil, nil
 			} else {

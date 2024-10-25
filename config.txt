@@ -1,4 +1,4 @@
 {
-  "board": "board-1"
+  "board": "board-1",
   "encoderResetStraight": "encoder-resetstraight"
 }

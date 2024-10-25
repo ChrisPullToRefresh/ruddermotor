@@ -161,10 +161,26 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 	return motor.Properties{}, fmt.Errorf("ResetZeroPosition not yet implemented")
 }
 
-// TODO: implement this for the rudder
 // ResetZeroPosition implements motor.Motor.
 func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, extra map[string]interface{}) error {
-	return fmt.Errorf("ResetZeroPosition not yet implemented")
+	if (m.rs != ccwRudderState) && (m.rs != cwRudderState) {
+		return fmt.Errorf("can only call ResetZeroPosition when turning. current rudder state = %v", m.rs)
+	}
+	newPowerPct := -m.powerPct
+
+	m.SetPower(ctx, newPowerPct, nil)
+	// TODO: implement as a go function and store the cancel function in custommotor
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	//for {
+	readings, err := m.ers.Readings(ctx, nil)
+	if err != nil {
+		m.logger.Error(err)
+		return err
+	}
+	m.logger.Infof("encoder set straight: %v", readings)
+	return nil
+	//}
 }
 
 func (m *customMotor) setPin(pinName string, high bool) {

@@ -39,9 +39,18 @@ const (
 	rudderCwPin  = "31"
 	rudderCcwPin = "32"
 
-	rudderStopPwmDutyCycle = 0
-	rudderSlowPwmDutyCycle = 0.2
-	rudderPwmFrequency     = 500
+	rudderStopPwmDutyCycle               = 0.0
+	rudderSlowPwmDutyCycle               = 0.5
+	rudderFastPwmDutyCycle               = 1.0
+	rudderTurnTimeMilliseconds           = 500
+	rudderResetZeroTimeOutSeconds        = 1
+	rudderResetZeroPollPauseMilliseconds = 10
+	rudderPwmFrequency                   = 500
+
+	rudderCommandSmallLeft  = "smallLeft"
+	rudderCommandSmallRight = "smallRight"
+	rudderCommandBigLeft    = "bigLeft"
+	rudderCommandBigRight   = "bigRight"
 )
 
 func init() {
@@ -129,12 +138,12 @@ type customMotor struct {
 
 // GoTo implements motor.Motor.
 func (m *customMotor) GoTo(ctx context.Context, rpm float64, positionRevolutions float64, extra map[string]interface{}) error {
-	return fmt.Errorf("GoTo not yet implemented")
+	return errUnimplemented
 }
 
 // GoFor implements motor.Motor.
 func (m *customMotor) GoFor(ctx context.Context, rpm float64, revolutions float64, extra map[string]interface{}) error {
-	return fmt.Errorf("GoFor not yet implemented")
+	return errUnimplemented
 }
 
 // IsMoving implements motor.Motor.
@@ -154,12 +163,12 @@ func (m *customMotor) IsPowered(ctx context.Context, extra map[string]interface{
 
 // Position implements motor.Motor.
 func (m *customMotor) Position(ctx context.Context, extra map[string]interface{}) (float64, error) {
-	return 0.0, fmt.Errorf("Position not yet implemented")
+	return 0.0, errUnimplemented
 }
 
 // Properties implements motor.Motor.
 func (m *customMotor) Properties(ctx context.Context, extra map[string]interface{}) (motor.Properties, error) {
-	return motor.Properties{}, fmt.Errorf("ResetZeroPosition not yet implemented")
+	return motor.Properties{}, errUnimplemented
 }
 
 // ResetZeroPosition implements motor.Motor.
@@ -176,13 +185,13 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	// TODO: implement as a go function and store the cancel function in custommotor
 	m.mu.Lock()
 	startTicks := -1.0
-	timer := time.After(1 * time.Second)
+	timer := time.After(time.Second * rudderResetZeroTimeOutSeconds)
 	for {
 		select {
 		case <-timer:
 			m.mu.Unlock()
 			m.Stop(ctx, nil)
-			return fmt.Errorf("timed out of ResetZeroPosition")
+			return fmt.Errorf("timed out of ResetZeroPosition after %v second(s)", rudderResetZeroTimeOutSeconds)
 		default:
 			ticks, _, err := m.ers.Position(ctx, encoder.PositionTypeTicks, nil)
 			if err != nil {
@@ -245,13 +254,6 @@ func (m *customMotor) setPwmDutyCycle(pinName string, dutyCyclePct float64) {
 }
 
 func (m *customMotor) resetRudder() {
-	/*
-			await setPin(boardClient, rudderCwPin, false);
-		  await setPin(boardClient, rudderCcwPin, false);
-
-		  await setPwmFrequency(boardClient, rudderCwPin, rudderPwmFrequency);
-		  await setPwmFrequency(boardClient, rudderCcwPin, rudderPwmFrequency);
-	*/
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -361,14 +363,23 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 		// "turnThenCenter":"smallLeft"
 		case "turnThenCenter":
 			command := value.(string)
-			if command == "smallLeft" {
-				m.SetPower(ctx, 1.0, nil)
-				time.Sleep(time.Millisecond * 500)
-				m.ResetZeroPosition(ctx, 0, nil)
-				return nil, nil
-			} else {
+			var powerPct = 0.0
+			switch command {
+			case rudderCommandSmallLeft:
+				powerPct = -rudderSlowPwmDutyCycle
+			case rudderCommandSmallRight:
+				powerPct = rudderSlowPwmDutyCycle
+			case rudderCommandBigLeft:
+				powerPct = -rudderFastPwmDutyCycle
+			case rudderCommandBigRight:
+				powerPct = rudderFastPwmDutyCycle
+			default:
 				return nil, fmt.Errorf("unknown DoCommand value for %v = %v", key, value)
 			}
+			m.SetPower(ctx, powerPct, nil)
+			time.Sleep(time.Millisecond * rudderTurnTimeMilliseconds)
+			m.ResetZeroPosition(ctx, 0, nil)
+			return nil, nil
 		default:
 			return nil, fmt.Errorf("unknown DoCommand key = %v ", key)
 		}

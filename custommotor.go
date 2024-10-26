@@ -209,7 +209,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 				m.Stop(ctx, nil)
 				return nil
 			}
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond * rudderResetZeroPollPauseMilliseconds)
 		}
 	}
 }

@@ -39,10 +39,11 @@ const (
 	rudderCwPin  = "31"
 	rudderCcwPin = "32"
 
-	rudderStopPwmDutyCycle               = 0.0
-	rudderSlowPwmDutyCycle               = 0.5
-	rudderFastPwmDutyCycle               = 1.0
-	rudderTurnTimeMilliseconds           = 500
+	rudderStopPwmDutyCycle = 0.0
+	rudderPwmDutyCycle     = 0.5
+	//rudderFastPwmDutyCycle               = 1.0
+	rudderSmallTurnTime                  = time.Millisecond * 500
+	rudderBigTurnTime                    = time.Millisecond * 1000
 	rudderResetZeroTimeOutSeconds        = 1
 	rudderResetZeroPollPauseMilliseconds = 10
 	rudderPwmFrequency                   = 500
@@ -363,21 +364,26 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 		// "turnThenCenter":"smallLeft"
 		case "turnThenCenter":
 			command := value.(string)
-			var powerPct = 0.0
+			powerPct := 0.0
+			rudderTurnTime := time.Millisecond * 0
 			switch command {
 			case rudderCommandSmallLeft:
-				powerPct = -rudderSlowPwmDutyCycle
+				powerPct = -rudderPwmDutyCycle
+				rudderTurnTime = rudderSmallTurnTime
 			case rudderCommandSmallRight:
-				powerPct = rudderSlowPwmDutyCycle
+				powerPct = rudderPwmDutyCycle
+				rudderTurnTime = rudderSmallTurnTime
 			case rudderCommandBigLeft:
-				powerPct = -rudderFastPwmDutyCycle
+				powerPct = -rudderPwmDutyCycle
+				rudderTurnTime = rudderBigTurnTime
 			case rudderCommandBigRight:
-				powerPct = rudderFastPwmDutyCycle
+				powerPct = rudderPwmDutyCycle
+				rudderTurnTime = rudderBigTurnTime
 			default:
 				return nil, fmt.Errorf("unknown DoCommand value for %v = %v", key, value)
 			}
 			m.SetPower(ctx, powerPct, nil)
-			time.Sleep(time.Millisecond * rudderTurnTimeMilliseconds)
+			time.Sleep(rudderTurnTime)
 			m.ResetZeroPosition(ctx, 0, nil)
 			return nil, nil
 		default:

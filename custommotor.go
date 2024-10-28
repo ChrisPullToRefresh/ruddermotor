@@ -44,7 +44,7 @@ const (
 	//rudderFastPwmDutyCycle               = 1.0
 	rudderSmallTurnTime                  = time.Millisecond * 500
 	rudderBigTurnTime                    = time.Millisecond * 1000
-	rudderResetZeroTimeOut               = time.Millisecond * 1250
+	rudderResetZeroTimeOut               = time.Millisecond * 1500
 	rudderResetZeroPollPauseMilliseconds = 10
 	rudderPwmFrequency                   = 500
 

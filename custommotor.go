@@ -181,7 +181,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	m.logger.Infof("current power: %v", m.powerPct)
 	newPowerPct := m.powerPct
 	signNewPowerPct := 1.0
-	if m.rs == ccwRudderState {
+	if m.rs == cwRudderState {
 		signNewPowerPct = -1.0
 	}
 	newPowerPct *= signNewPowerPct

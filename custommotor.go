@@ -44,7 +44,7 @@ const (
 	//rudderFastPwmDutyCycle               = 1.0
 	rudderSmallTurnTime                  = time.Millisecond * 500
 	rudderBigTurnTime                    = time.Millisecond * 1000
-	rudderResetZeroTimeOutSeconds        = 1
+	rudderResetZeroTimeOut               = time.Millisecond * 1250
 	rudderResetZeroPollPauseMilliseconds = 10
 	rudderPwmFrequency                   = 500
 
@@ -191,13 +191,13 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	// TODO: implement as a go function and store the cancel function in custommotor
 	m.mu.Lock()
 	startTicks := -1.0
-	timer := time.After(time.Second * rudderResetZeroTimeOutSeconds)
+	timer := time.After(rudderResetZeroTimeOut)
 	for {
 		select {
 		case <-timer:
 			m.mu.Unlock()
 			m.Stop(ctx, nil)
-			return fmt.Errorf("timed out of ResetZeroPosition after %v second(s)", rudderResetZeroTimeOutSeconds)
+			return fmt.Errorf("timed out of ResetZeroPosition after %v milliseconds", rudderResetZeroTimeOut)
 		default:
 			ticks, _, err := m.ers.Position(ctx, encoder.PositionTypeTicks, nil)
 			if err != nil {

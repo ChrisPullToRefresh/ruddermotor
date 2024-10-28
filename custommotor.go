@@ -179,7 +179,12 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 		return fmt.Errorf("can only call ResetZeroPosition when turning. current rudder state = %v", m.rs)
 	}
 	m.logger.Infof("current power: %v", m.powerPct)
-	newPowerPct := -m.powerPct
+	newPowerPct := m.powerPct
+	signNewPowerPct := 1.0
+	if m.rs == ccwRudderState {
+		signNewPowerPct = -1.0
+	}
+	newPowerPct *= signNewPowerPct
 	m.logger.Infof("new power: %v", newPowerPct)
 	m.Stop(ctx, nil)
 	m.SetPower(ctx, newPowerPct, nil)

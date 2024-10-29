@@ -50,7 +50,7 @@ const (
 	// ResetZeroPosition will pause for this length of time before returning
 	// to zero - this is the key of the value passed to the function
 	pauseBeforeReset      = "pauseBeforeReset"
-	pauseBeforeResetValue = 2000
+	pauseBeforeResetValue = 500
 
 	rudderCommandTurnThenCenter = "turnThenCenter"
 	rudderCommandSmallLeft      = "smallLeft"
@@ -411,7 +411,7 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			time.Sleep(rudderTurnTime)
 			extra := make(map[string]interface{})
 			extra[pauseBeforeReset] = pauseBeforeResetValue
-			m.ResetZeroPosition(ctx, 0, nil)
+			m.ResetZeroPosition(ctx, 0, extra)
 			return nil, nil
 		default:
 			return nil, fmt.Errorf("unknown DoCommand key = %v ", key)

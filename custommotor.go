@@ -50,7 +50,7 @@ const (
 	// ResetZeroPosition will pause for this length of time before returning
 	// to zero - this is the key of the value passed to the function
 	pauseBeforeReset      = "pauseBeforeReset"
-	pauseBeforeResetValue = 200
+	pauseBeforeResetValue = 2000
 
 	rudderCommandTurnThenCenter = "turnThenCenter"
 	rudderCommandSmallLeft      = "smallLeft"

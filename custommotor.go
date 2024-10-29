@@ -47,11 +47,16 @@ const (
 	rudderResetZeroTimeOut               = time.Millisecond * 1500
 	rudderResetZeroPollPauseMilliseconds = 10
 	rudderPwmFrequency                   = 500
+	// ResetZeroPosition will pause for this length of time before returning
+	// to zero - this is the key of the value passed to the function
+	pauseBeforeReset      = "pauseBeforeReset"
+	pauseBeforeResetValue = 200
 
-	rudderCommandSmallLeft  = "smallLeft"
-	rudderCommandSmallRight = "smallRight"
-	rudderCommandBigLeft    = "bigLeft"
-	rudderCommandBigRight   = "bigRight"
+	rudderCommandTurnThenCenter = "turnThenCenter"
+	rudderCommandSmallLeft      = "smallLeft"
+	rudderCommandSmallRight     = "smallRight"
+	rudderCommandBigLeft        = "bigLeft"
+	rudderCommandBigRight       = "bigRight"
 )
 
 func init() {
@@ -174,6 +179,20 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 
 // ResetZeroPosition implements motor.Motor.
 func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, extra map[string]interface{}) error {
+	var pause = time.Millisecond * 0
+	for key, value := range extra {
+		switch key {
+		case pauseBeforeReset:
+			pauseMilliseconds, ok := value.(int)
+			if !ok {
+				return fmt.Errorf("unparseable int argument for extra argument %v = %v", key, value)
+			}
+			pause = time.Millisecond * time.Duration(pauseMilliseconds)
+		default:
+			return fmt.Errorf("unknown extra key = %v", key)
+		}
+	}
+
 	m.logger.Infof("Begin ResetZeroPosition")
 	if (m.rs != ccwRudderState) && (m.rs != cwRudderState) {
 		return fmt.Errorf("can only call ResetZeroPosition when turning. current rudder state = %v", m.rs)
@@ -187,6 +206,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	newPowerPct *= signNewPowerPct
 	m.logger.Infof("new power: %v", newPowerPct)
 	m.Stop(ctx, nil)
+	time.Sleep(pause)
 	m.SetPower(ctx, newPowerPct, nil)
 	// TODO: implement as a go function and store the cancel function in custommotor
 	m.mu.Lock()
@@ -367,7 +387,7 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 	for key, value := range cmd {
 		switch key {
 		// "turnThenCenter":"smallLeft"
-		case "turnThenCenter":
+		case rudderCommandTurnThenCenter:
 			command := value.(string)
 			powerPct := 0.0
 			rudderTurnTime := time.Millisecond * 0
@@ -389,6 +409,8 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			}
 			m.SetPower(ctx, powerPct, nil)
 			time.Sleep(rudderTurnTime)
+			extra := make(map[string]interface{})
+			extra[pauseBeforeReset] = pauseBeforeResetValue
 			m.ResetZeroPosition(ctx, 0, nil)
 			return nil, nil
 		default:

@@ -377,6 +377,7 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 		return fmt.Errorf("unable to get resets encoder pin %v for %v", m.cfg.ResetEncoderPin, m.name)
 	}
 	pin.Set(ctx, false, nil)
+	m.logger.Info("Reset encoder pin %v to low", m.cfg.ResetEncoderPin)
 
 	return nil
 }

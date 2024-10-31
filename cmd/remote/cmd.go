@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"strconv"
 
 	"go.viam.com/rdk/module"
 	// TODO: update to the interface you'll implement
@@ -33,6 +34,12 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 	if err := netconfig.Validate(""); err != nil {
 		return err
 	}
+
+	pinInt, err := strconv.Atoi(os.Args[4])
+	if err != nil {
+		return err
+	}
+	logger.Infof("Reset pin for magnet encode set to %v", pinInt)
 
 	// Update the Attributes and ConvertedAttributes with the attributes your modular resource should receive
 	conf := &config.Config{

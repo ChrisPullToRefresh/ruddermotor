@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"sync"
 	"time"
 
@@ -380,9 +381,16 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 	}
 	m.logger.Info("encoder-resetstraight is now configured to ", m.ers.Name())
 
+	pinInt, err := strconv.Atoi(m.cfg.ResetPin)
+	if err != nil {
+		m.logger.Errorf("Can't parse the reset pin number: %v", m.cfg.ResetPin)
+		return err
+	}
+	m.logger.Infof("Reset pin for magnet encode set to %v", pinInt)
+
 	pin, err := m.b.GPIOPinByName(m.cfg.ResetPin)
 	if err != nil {
-		return fmt.Errorf("unable to get resets encoder pin %v for %v", m.cfg.ResetPin, m.name)
+		return fmt.Errorf("unable to get reset encoder pin %v for %v", m.cfg.ResetPin, m.name)
 	}
 	pin.Set(ctx, false, nil)
 	m.logger.Info("Reset encoder pin %v to low", m.cfg.ResetPin)

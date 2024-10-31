@@ -15,7 +15,6 @@ import (
 	"go.viam.com/rdk/components/encoder"
 	"go.viam.com/rdk/components/motor"
 	"go.viam.com/rdk/logging"
-	"go.viam.com/rdk/operation"
 	"go.viam.com/rdk/resource"
 
 	"go.viam.com/utils"
@@ -73,6 +72,7 @@ func init() {
 type Config struct {
 	Board                string `json:"board"`
 	EncoderResetStraight string `json:"encoderResetStraight"`
+	ResetEncoderPin      string `json:"resetEncoderPin"`
 }
 
 // Validate validates the config and returns implicit dependencies.
@@ -107,7 +107,6 @@ func newCustomMotor(ctx context.Context, deps resource.Dependencies, rawConf res
 		cfg:        conf,
 		cancelCtx:  cancelCtx,
 		cancelFunc: cancelFunc,
-		opMgr:      operation.NewSingleOperationManager(),
 	}
 
 	// TODO: If your custom component has dependencies, perform any checks you need to on them.
@@ -134,7 +133,6 @@ type customMotor struct {
 	cancelCtx  context.Context
 	cancelFunc func()
 	mu         sync.Mutex
-	opMgr      *operation.SingleOperationManager
 
 	b        board.Board
 	ers      encoder.Encoder
@@ -308,8 +306,6 @@ func iotaEqual(x, y float64) bool {
 // SetPower implements motor.Motor.
 // powerPct > 0 == raise == cw
 func (m *customMotor) SetPower(ctx context.Context, powerPct float64, extra map[string]interface{}) error {
-	m.opMgr.CancelRunning(ctx)
-
 	if iotaEqual(powerPct, 0.0) {
 		return m.Stop(ctx, nil)
 	}
@@ -338,7 +334,6 @@ func (m *customMotor) SetRPM(ctx context.Context, rpm float64, extra map[string]
 
 // Stop implements motor.Motor.
 func (m *customMotor) Stop(ctx context.Context, extra map[string]interface{}) error {
-	m.opMgr.CancelRunning(ctx)
 
 	m.stopRudder()
 	return nil
@@ -352,7 +347,6 @@ func (m *customMotor) Name() resource.Name {
 // Reconfigures the model. Most models can be reconfigured in place without needing to rebuild. If you need to instead create a new instance of the motor, throw a NewMustBuildError.
 // TODO: rename as appropriate, i.e. m *customMotor
 func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencies, conf resource.Config) error {
-	m.opMgr.CancelRunning(ctx)
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -377,6 +371,12 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 		return fmt.Errorf("unable to get encoder %v for %v", motorConfig.EncoderResetStraight, m.name)
 	}
 	m.logger.Info("encoder-resetstraight is now configured to ", m.ers.Name())
+
+	pin, err := m.b.GPIOPinByName(m.cfg.ResetEncoderPin)
+	if err != nil {
+		return fmt.Errorf("unable to get resets encoder pin %v for %v", m.cfg.ResetEncoderPin, m.name)
+	}
+	pin.Set(ctx, false, nil)
 
 	return nil
 }

@@ -2,10 +2,13 @@
 > This is a module template. Read the [instructions](./Instructions.md) for a step by step guide on how to create your module.
 
 
-# <INSERT NAME> modular resource
+# ruddermotor modular resource
 
-This module implements...
-With this model, you can...
+This module implements the **motor** interface.
+
+It requires a magent encoder to reset the rudder to straight (implementing ResetZeroPosition())
+
+On startup, it reads the pin # of the encoder and sets that pin to low.
 
 ## Requirements
 

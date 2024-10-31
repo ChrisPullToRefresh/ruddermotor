@@ -43,12 +43,14 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 				API:   motor.API,
 				Model: ruddermotor.Model,
 				Attributes: rdkutils.AttributeMap{
-					"board":                 os.Args[2],
-					"encoder-resetstraight": os.Args[3],
+					"board":                os.Args[2],
+					"encoderResetStraight": os.Args[3],
+					"resetEncoderPin":      os.Args[4],
 				},
 				ConvertedAttributes: &ruddermotor.Config{
 					Board:                os.Args[2],
 					EncoderResetStraight: os.Args[3],
+					ResetEncoderPin:      os.Args[4],
 				},
 			},
 		},

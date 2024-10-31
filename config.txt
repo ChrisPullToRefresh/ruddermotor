@@ -1,4 +1,5 @@
 {
   "board": "board-1",
-  "encoderResetStraight": "encoder-resetstraight"
+  "encoderResetStraight": "encoder-resetstraight",
+  "resetPin": "11"
 }

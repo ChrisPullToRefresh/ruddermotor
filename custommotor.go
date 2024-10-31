@@ -380,12 +380,12 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 	}
 	m.logger.Info("encoder-resetstraight is now configured to ", m.ers.Name())
 
-	pin, err := m.b.GPIOPinByName(m.cfg.ResetEncoderPin)
+	pin, err := m.b.GPIOPinByName(m.cfg.ResetPin)
 	if err != nil {
-		return fmt.Errorf("unable to get resets encoder pin %v for %v", m.cfg.ResetEncoderPin, m.name)
+		return fmt.Errorf("unable to get resets encoder pin %v for %v", m.cfg.ResetPin, m.name)
 	}
 	pin.Set(ctx, false, nil)
-	m.logger.Info("Reset encoder pin %v to low", m.cfg.ResetEncoderPin)
+	m.logger.Info("Reset encoder pin %v to low", m.cfg.ResetPin)
 
 	return nil
 }

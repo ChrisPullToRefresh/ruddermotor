@@ -72,7 +72,7 @@ func init() {
 type Config struct {
 	Board                string `json:"board"`
 	EncoderResetStraight string `json:"encoderResetStraight"`
-	ResetEncoderPin      string `json:"resetEncoderPin"`
+	ResetPin             string `json:"resetPin"`
 }
 
 // Validate validates the config and returns implicit dependencies.
@@ -81,6 +81,14 @@ func (cfg *Config) Validate(path string) ([]string, error) {
 
 	if cfg.Board == "" {
 		return nil, utils.NewConfigValidationFieldRequiredError(path, "board")
+	}
+
+	if cfg.EncoderResetStraight == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderResetStraight")
+	}
+
+	if cfg.ResetPin == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "resetPin")
 	}
 
 	// TODO: return implicit dependencies if needed as the first value

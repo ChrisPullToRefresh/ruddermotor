@@ -32,9 +32,9 @@ var (
 type rudderState string
 
 const (
-	ccwRudderState     = "ccwRudder"
-	cwRudderState      = "cwRudder"
-	stoppedRudderState = "stoppedRudder"
+	ccwRudderState     = "CcwRudder"
+	cwRudderState      = "CwRudder"
+	stoppedRudderState = "StoppedRudder"
 
 	rudderCwPin  = "31"
 	rudderCcwPin = "32"
@@ -49,14 +49,14 @@ const (
 	rudderPwmFrequency                   = 500
 	// ResetZeroPosition will pause for this length of time before returning
 	// to zero - this is the key of the value passed to the function
-	pauseBeforeReset      = "pauseBeforeReset"
+	pauseBeforeReset      = "PauseBeforeReset"
 	pauseBeforeResetValue = 500
 
-	rudderCommandTurnThenCenter = "turnThenCenter"
-	rudderCommandSmallLeft      = "smallLeft"
-	rudderCommandSmallRight     = "smallRight"
-	rudderCommandBigLeft        = "bigLeft"
-	rudderCommandBigRight       = "bigRight"
+	rudderCommandTurnThenCenter = "TurnThenCenter"
+	rudderCommandSmallLeft      = "SmallLeft"
+	rudderCommandSmallRight     = "SmallRight"
+	rudderCommandBigLeft        = "BigLeft"
+	rudderCommandBigRight       = "BigRight"
 )
 
 func init() {
@@ -77,7 +77,6 @@ type Config struct {
 }
 
 // Validate validates the config and returns implicit dependencies.
-// TODO: Change the Validate function to validate any config variables.
 func (cfg *Config) Validate(path string) ([]string, error) {
 
 	if cfg.Board == "" {
@@ -403,7 +402,7 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {
 	for key, value := range cmd {
 		switch key {
-		// "turnThenCenter":"smallLeft"
+		// "TurnThenCenter": "SmallLeft"
 		case rudderCommandTurnThenCenter:
 			command := value.(string)
 			powerPct := 0.0

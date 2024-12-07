@@ -2,5 +2,6 @@
   "board": "board-1",
   "encoderPort": "encoder-port",
   "encoderStarboard": "encoder-starboard",
-  "resetPin": "11"
+  "resetPinPort": "11",
+  "resetPinStarboard": "13"
 }

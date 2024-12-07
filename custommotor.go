@@ -71,10 +71,11 @@ func init() {
 // TODO: Change the Config struct to contain any values that you would like to be able to configure from the attributes field in the component
 // configuration. For more information see https://docs.viam.com/build/configure/#components
 type Config struct {
-	Board            string `json:"board"`
-	EncoderPort      string `json:"encoderPort"`
-	EncoderStarboard string `json:"encoderStarboard"`
-	ResetPin         string `json:"resetPin"`
+	Board             string `json:"board"`
+	EncoderPort       string `json:"encoderPort"`
+	EncoderStarboard  string `json:"encoderStarboard"`
+	ResetPinPort      string `json:"resetPinPort"`
+	ResetPinStarboard string `json:"resetPinStarboard"`
 }
 
 // Validate validates the config and returns implicit dependencies.
@@ -92,8 +93,12 @@ func (cfg *Config) Validate(path string) ([]string, error) {
 		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderStarboard")
 	}
 
-	if cfg.ResetPin == "" {
-		return nil, utils.NewConfigValidationFieldRequiredError(path, "resetPin")
+	if cfg.ResetPinPort == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "resetPinPort")
+	}
+
+	if cfg.ResetPinStarboard == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "resetPinStarboard")
 	}
 
 	// TODO: return implicit dependencies if needed as the first value
@@ -392,19 +397,31 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 	}
 	m.logger.Info("encoder-starboard is now configured to ", m.encoderStarboard.Name())
 
-	pinInt, err := strconv.Atoi(m.cfg.ResetPin)
+	pinIntPort, err := strconv.Atoi(m.cfg.ResetPinPort)
 	if err != nil {
-		m.logger.Errorf("Can't parse the reset pin number: %v", m.cfg.ResetPin)
+		m.logger.Errorf("Can't parse the port reset pin number: %v", m.cfg.ResetPinPort)
 		return err
 	}
-	m.logger.Infof("Reset pin for magnet encode set to %v", pinInt)
-
-	pin, err := m.b.GPIOPinByName(m.cfg.ResetPin)
+	m.logger.Infof("Reset pin for magnet encode set to %v", pinIntPort)
+	pinPort, err := m.b.GPIOPinByName(m.cfg.ResetPinPort)
 	if err != nil {
-		return fmt.Errorf("unable to get reset encoder pin %v for %v", m.cfg.ResetPin, m.name)
+		return fmt.Errorf("unable to get reset port encoder pin %v for %v", m.cfg.ResetPinPort, m.name)
 	}
-	pin.Set(ctx, false, nil)
-	m.logger.Info("Reset encoder pin %v to low", m.cfg.ResetPin)
+	pinPort.Set(ctx, false, nil)
+	m.logger.Info("Reset port encoder pin %v to low", m.cfg.ResetPinPort)
+
+	pinIntStarboard, err := strconv.Atoi(m.cfg.ResetPinStarboard)
+	if err != nil {
+		m.logger.Errorf("Can't parse the starboard reset pin number: %v", m.cfg.ResetPinStarboard)
+		return err
+	}
+	m.logger.Infof("Reset pin for magnet encode set to %v", pinIntStarboard)
+	pinStarboard, err := m.b.GPIOPinByName(m.cfg.ResetPinStarboard)
+	if err != nil {
+		return fmt.Errorf("unable to get reset starboard encoder pin %v for %v", m.cfg.ResetPinStarboard, m.name)
+	}
+	pinStarboard.Set(ctx, false, nil)
+	m.logger.Info("Reset starboard encoder pin %v to low", m.cfg.ResetPinStarboard)
 
 	return nil
 }

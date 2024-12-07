@@ -35,7 +35,7 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 		return err
 	}
 
-	pinInt, err := strconv.Atoi(os.Args[4])
+	pinInt, err := strconv.Atoi(os.Args[5])
 	if err != nil {
 		return err
 	}
@@ -50,14 +50,16 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 				API:   motor.API,
 				Model: ruddermotor.Model,
 				Attributes: rdkutils.AttributeMap{
-					"board":                os.Args[2],
-					"encoderResetStraight": os.Args[3],
-					"resetPin":             os.Args[4],
+					"board":            os.Args[2],
+					"encoderPort":      os.Args[3],
+					"encoderStarboard": os.Args[4],
+					"resetPin":         os.Args[5],
 				},
 				ConvertedAttributes: &ruddermotor.Config{
-					Board:                os.Args[2],
-					EncoderResetStraight: os.Args[3],
-					ResetPin:             os.Args[4],
+					Board:            os.Args[2],
+					EncoderPort:      os.Args[3],
+					EncoderStarboard: os.Args[4],
+					ResetPin:         os.Args[5],
 				},
 			},
 		},

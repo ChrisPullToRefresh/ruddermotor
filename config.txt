@@ -1,5 +1,6 @@
 {
   "board": "board-1",
-  "encoderResetStraight": "encoder-resetstraight",
+  "encoderPort": "encoder-port",
+  "encoderStarboard": "encoder-starboard",
   "resetPin": "11"
 }

@@ -71,9 +71,10 @@ func init() {
 // TODO: Change the Config struct to contain any values that you would like to be able to configure from the attributes field in the component
 // configuration. For more information see https://docs.viam.com/build/configure/#components
 type Config struct {
-	Board                string `json:"board"`
-	EncoderResetStraight string `json:"encoderResetStraight"`
-	ResetPin             string `json:"resetPin"`
+	Board            string `json:"board"`
+	EncoderPort      string `json:"encoderPort"`
+	EncoderStarboard string `json:"encoderStarboard"`
+	ResetPin         string `json:"resetPin"`
 }
 
 // Validate validates the config and returns implicit dependencies.
@@ -83,8 +84,12 @@ func (cfg *Config) Validate(path string) ([]string, error) {
 		return nil, utils.NewConfigValidationFieldRequiredError(path, "board")
 	}
 
-	if cfg.EncoderResetStraight == "" {
-		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderResetStraight")
+	if cfg.EncoderPort == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderPort")
+	}
+
+	if cfg.EncoderStarboard == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderStarboard")
 	}
 
 	if cfg.ResetPin == "" {
@@ -142,10 +147,11 @@ type customMotor struct {
 	cancelFunc func()
 	mu         sync.Mutex
 
-	b        board.Board
-	ers      encoder.Encoder
-	rs       rudderState
-	powerPct float64
+	b                board.Board
+	encoderPort      encoder.Encoder
+	encoderStarboard encoder.Encoder
+	rs               rudderState
+	powerPct         float64
 }
 
 // GoTo implements motor.Motor.
@@ -225,7 +231,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 			m.Stop(ctx, nil)
 			return fmt.Errorf("timed out of ResetZeroPosition after %v milliseconds", rudderResetZeroTimeOut)
 		default:
-			ticks, _, err := m.ers.Position(ctx, encoder.PositionTypeTicks, nil)
+			ticks, _, err := m.encoderPort.Position(ctx, encoder.PositionTypeTicks, nil)
 			if err != nil {
 				m.logger.Error(err)
 				m.mu.Unlock()
@@ -374,11 +380,17 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 	}
 	m.logger.Info("board is now configured to ", m.b.Name())
 
-	m.ers, err = encoder.FromDependencies(deps, motorConfig.EncoderResetStraight)
+	m.encoderPort, err = encoder.FromDependencies(deps, motorConfig.EncoderPort)
 	if err != nil {
-		return fmt.Errorf("unable to get encoder %v for %v", motorConfig.EncoderResetStraight, m.name)
+		return fmt.Errorf("unable to get encoder %v for %v", motorConfig.EncoderPort, m.name)
 	}
-	m.logger.Info("encoder-resetstraight is now configured to ", m.ers.Name())
+	m.logger.Info("encoder-port is now configured to ", m.encoderPort.Name())
+
+	m.encoderStarboard, err = encoder.FromDependencies(deps, motorConfig.EncoderStarboard)
+	if err != nil {
+		return fmt.Errorf("unable to get encoder %v for %v", motorConfig.EncoderStarboard, m.name)
+	}
+	m.logger.Info("encoder-starboard is now configured to ", m.encoderStarboard.Name())
 
 	pinInt, err := strconv.Atoi(m.cfg.ResetPin)
 	if err != nil {

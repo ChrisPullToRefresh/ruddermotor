@@ -135,6 +135,8 @@ func newCustomMotor(ctx context.Context, deps resource.Dependencies, rawConf res
 	m.resetRudder()
 	m.rs = stoppedRudderState
 
+	go m.pollingLoop(ctx)
+
 	return m, nil
 }
 

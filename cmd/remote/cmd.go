@@ -35,17 +35,17 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 		return err
 	}
 
-	pinIntPort, err := strconv.Atoi(os.Args[5])
+	pinIntPort, err := strconv.Atoi(os.Args[3])
 	if err != nil {
 		return err
 	}
-	logger.Infof("Reset pin for port magnet encoder will be set to %v", pinIntPort)
+	logger.Infof("pin for port magnet sensor will be set to %v", pinIntPort)
 
-	pinIntStarboard, err := strconv.Atoi(os.Args[6])
+	pinIntStarboard, err := strconv.Atoi(os.Args[4])
 	if err != nil {
 		return err
 	}
-	logger.Infof("Reset pin for starboard magnet encoder will be set to %v", pinIntStarboard)
+	logger.Infof("pin for starboard magnet sensor will be set to %v", pinIntStarboard)
 
 	// Update the Attributes and ConvertedAttributes with the attributes your modular resource should receive
 	conf := &config.Config{
@@ -56,18 +56,14 @@ func mainWithArgs(ctx context.Context, args []string, logger logging.Logger) (er
 				API:   motor.API,
 				Model: ruddermotor.Model,
 				Attributes: rdkutils.AttributeMap{
-					"board":             os.Args[2],
-					"encoderPort":       os.Args[3],
-					"encoderStarboard":  os.Args[4],
-					"resetPinPort":      os.Args[5],
-					"resetPinStarboard": os.Args[6],
+					"board":               os.Args[2],
+					"encoderPinPort":      os.Args[3],
+					"encoderPinStarboard": os.Args[4],
 				},
 				ConvertedAttributes: &ruddermotor.Config{
-					Board:             os.Args[2],
-					EncoderPort:       os.Args[3],
-					EncoderStarboard:  os.Args[4],
-					ResetPinPort:      os.Args[5],
-					ResetPinStarboard: os.Args[6],
+					Board:               os.Args[2],
+					EncoderPinPort:      os.Args[3],
+					EncoderPinStarboard: os.Args[4],
 				},
 			},
 		},

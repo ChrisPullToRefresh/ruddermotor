@@ -13,7 +13,6 @@ import (
 
 	// TODO: update to the interface you'll implement
 	"go.viam.com/rdk/components/board"
-	"go.viam.com/rdk/components/encoder"
 	"go.viam.com/rdk/components/motor"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
@@ -31,6 +30,8 @@ var (
 
 type rudderState string
 
+type vesselSide string
+
 const (
 	ccwRudderState     = "CcwRudder"
 	cwRudderState      = "CwRudder"
@@ -46,6 +47,7 @@ const (
 	rudderBigTurnTime                    = time.Millisecond * 1000
 	rudderResetZeroTimeOut               = time.Millisecond * 1500
 	rudderResetZeroPollPauseMilliseconds = 10
+	encoderPollPauseMilliseconds         = 10
 	rudderPwmFrequency                   = 500
 	// ResetZeroPosition will pause for this length of time before returning
 	// to zero - this is the key of the value passed to the function
@@ -57,6 +59,10 @@ const (
 	rudderCommandSmallRight     = "SmallRight"
 	rudderCommandBigLeft        = "BigLeft"
 	rudderCommandBigRight       = "BigRight"
+
+	port      = "port"
+	starboard = "starboard"
+	center    = "center"
 )
 
 func init() {
@@ -71,11 +77,9 @@ func init() {
 // TODO: Change the Config struct to contain any values that you would like to be able to configure from the attributes field in the component
 // configuration. For more information see https://docs.viam.com/build/configure/#components
 type Config struct {
-	Board             string `json:"board"`
-	EncoderPort       string `json:"encoderPort"`
-	EncoderStarboard  string `json:"encoderStarboard"`
-	ResetPinPort      string `json:"resetPinPort"`
-	ResetPinStarboard string `json:"resetPinStarboard"`
+	Board               string `json:"board"`
+	EncoderPinPort      string `json:"encoderPinPort"`
+	EncoderPinStarboard string `json:"encoderPinStarboard"`
 }
 
 // Validate validates the config and returns implicit dependencies.
@@ -85,20 +89,12 @@ func (cfg *Config) Validate(path string) ([]string, error) {
 		return nil, utils.NewConfigValidationFieldRequiredError(path, "board")
 	}
 
-	if cfg.EncoderPort == "" {
-		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderPort")
+	if cfg.EncoderPinPort == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderPinPort")
 	}
 
-	if cfg.EncoderStarboard == "" {
-		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderStarboard")
-	}
-
-	if cfg.ResetPinPort == "" {
-		return nil, utils.NewConfigValidationFieldRequiredError(path, "resetPinPort")
-	}
-
-	if cfg.ResetPinStarboard == "" {
-		return nil, utils.NewConfigValidationFieldRequiredError(path, "resetPinStarboard")
+	if cfg.EncoderPinStarboard == "" {
+		return nil, utils.NewConfigValidationFieldRequiredError(path, "encoderPinStarboard")
 	}
 
 	// TODO: return implicit dependencies if needed as the first value
@@ -125,6 +121,7 @@ func newCustomMotor(ctx context.Context, deps resource.Dependencies, rawConf res
 		cfg:        conf,
 		cancelCtx:  cancelCtx,
 		cancelFunc: cancelFunc,
+		vesselSide: center,
 	}
 
 	// TODO: If your custom component has dependencies, perform any checks you need to on them.
@@ -152,11 +149,16 @@ type customMotor struct {
 	cancelFunc func()
 	mu         sync.Mutex
 
-	b                board.Board
-	encoderPort      encoder.Encoder
-	encoderStarboard encoder.Encoder
-	rs               rudderState
-	powerPct         float64
+	b board.Board
+	//encoderPort      encoder.Encoder
+	//encoderStarboard encoder.Encoder
+	encoderPinPort      board.GPIOPin
+	encoderPinStarboard board.GPIOPin
+	rs                  rudderState
+	powerPct            float64
+
+	// the side of the last encoder that was tripped by the rudder
+	vesselSide vesselSide
 }
 
 // GoTo implements motor.Motor.
@@ -194,6 +196,36 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 	return motor.Properties{}, errUnimplemented
 }
 
+func (m *customMotor) pollingLoop(ctx context.Context) {
+	for {
+		m.mu.Lock()
+		if m.encoderPinPort == nil || m.encoderPinStarboard == nil {
+			continue
+		}
+
+		isHighPort, err := m.encoderPinPort.Get(ctx, nil)
+		if err != nil {
+			m.logger.Error(err)
+			continue
+		}
+		isHighStarboard, err := m.encoderPinStarboard.Get(ctx, nil)
+		if err != nil {
+			m.logger.Error(err)
+			continue
+		}
+
+		if isHighPort && isHighStarboard {
+			m.vesselSide = center
+		} else if isHighPort {
+			m.vesselSide = port
+		} else if isHighStarboard {
+			m.vesselSide = starboard
+		}
+		m.mu.Unlock()
+		time.Sleep(time.Millisecond * encoderPollPauseMilliseconds)
+	}
+}
+
 // ResetZeroPosition implements motor.Motor.
 func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, extra map[string]interface{}) error {
 	var pause = time.Millisecond * 0
@@ -217,8 +249,10 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	m.logger.Infof("current power: %v", m.powerPct)
 	newPowerPct := m.powerPct
 	signNewPowerPct := 1.0
+	expectedVesselSide := port
 	if m.rs == cwRudderState {
 		signNewPowerPct = -1.0
+		expectedVesselSide = starboard
 	}
 	newPowerPct *= signNewPowerPct
 	m.logger.Infof("new power: %v", newPowerPct)
@@ -226,34 +260,36 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	time.Sleep(pause)
 	m.SetPower(ctx, newPowerPct, nil)
 	// TODO: implement as a go function and store the cancel function in custommotor
-	m.mu.Lock()
-	startTicks := -1.0
+	// m.mu.Lock()
+	//startTicks := -1.0
 	timer := time.After(rudderResetZeroTimeOut)
 	for {
+		// We stop when
+		m.mu.Lock()
 		select {
 		case <-timer:
-			m.mu.Unlock()
 			m.Stop(ctx, nil)
 			return fmt.Errorf("timed out of ResetZeroPosition after %v milliseconds", rudderResetZeroTimeOut)
 		default:
-			ticks, _, err := m.encoderPort.Position(ctx, encoder.PositionTypeTicks, nil)
-			if err != nil {
-				m.logger.Error(err)
-				m.mu.Unlock()
+			if m.vesselSide == center {
 				m.Stop(ctx, nil)
-				return err
-			}
-			if startTicks < 0 {
-				startTicks = ticks
-				m.logger.Infof("encoder set straight startTicks: %v", startTicks)
-			} else if startTicks != ticks {
-				m.logger.Infof("encoder set straight end turn ticks: %v", startTicks)
-				m.mu.Unlock()
+			} else if m.vesselSide != vesselSide(expectedVesselSide) {
 				m.Stop(ctx, nil)
-				return nil
+				return fmt.Errorf("unexpected vessel side in ResetZeroPosition: %v", m.vesselSide)
 			}
+			// ticks, _, err := m.encoderPort.Position(ctx, encoder.PositionTypeTicks, nil)
+			// if startTicks < 0 {
+			// 	startTicks = ticks
+			// 	m.logger.Infof("encoder set straight startTicks: %v", startTicks)
+			// } else if startTicks != ticks {
+			// 	m.logger.Infof("encoder set straight end turn ticks: %v", startTicks)
+			// 	m.mu.Unlock()
+			// 	m.Stop(ctx, nil)
+			// 	return nil
+			// }
 			time.Sleep(time.Millisecond * rudderResetZeroPollPauseMilliseconds)
 		}
+		m.mu.Unlock()
 	}
 }
 
@@ -385,45 +421,36 @@ func (m *customMotor) Reconfigure(ctx context.Context, deps resource.Dependencie
 	}
 	m.logger.Info("board is now configured to ", m.b.Name())
 
-	m.encoderPort, err = encoder.FromDependencies(deps, motorConfig.EncoderPort)
+	portPin, err := resetAndRetrievePin(ctx, m, m.cfg.EncoderPinPort, "port")
 	if err != nil {
-		return fmt.Errorf("unable to get encoder %v for %v", motorConfig.EncoderPort, m.name)
-	}
-	m.logger.Info("encoder-port is now configured to ", m.encoderPort.Name())
-
-	m.encoderStarboard, err = encoder.FromDependencies(deps, motorConfig.EncoderStarboard)
-	if err != nil {
-		return fmt.Errorf("unable to get encoder %v for %v", motorConfig.EncoderStarboard, m.name)
-	}
-	m.logger.Info("encoder-starboard is now configured to ", m.encoderStarboard.Name())
-
-	pinIntPort, err := strconv.Atoi(m.cfg.ResetPinPort)
-	if err != nil {
-		m.logger.Errorf("Can't parse the port reset pin number: %v", m.cfg.ResetPinPort)
 		return err
 	}
-	m.logger.Infof("Reset pin for magnet encode set to %v", pinIntPort)
-	pinPort, err := m.b.GPIOPinByName(m.cfg.ResetPinPort)
-	if err != nil {
-		return fmt.Errorf("unable to get reset port encoder pin %v for %v", m.cfg.ResetPinPort, m.name)
-	}
-	pinPort.Set(ctx, false, nil)
-	m.logger.Info("Reset port encoder pin %v to low", m.cfg.ResetPinPort)
+	m.encoderPinPort = portPin
 
-	pinIntStarboard, err := strconv.Atoi(m.cfg.ResetPinStarboard)
+	starboardPin, err := resetAndRetrievePin(ctx, m, m.cfg.EncoderPinStarboard, "starboard")
 	if err != nil {
-		m.logger.Errorf("Can't parse the starboard reset pin number: %v", m.cfg.ResetPinStarboard)
 		return err
 	}
-	m.logger.Infof("Reset pin for magnet encode set to %v", pinIntStarboard)
-	pinStarboard, err := m.b.GPIOPinByName(m.cfg.ResetPinStarboard)
-	if err != nil {
-		return fmt.Errorf("unable to get reset starboard encoder pin %v for %v", m.cfg.ResetPinStarboard, m.name)
-	}
-	pinStarboard.Set(ctx, false, nil)
-	m.logger.Info("Reset starboard encoder pin %v to low", m.cfg.ResetPinStarboard)
+	m.encoderPinStarboard = starboardPin
 
 	return nil
+}
+
+func resetAndRetrievePin(ctx context.Context, m *customMotor, encoderPin string, encoderPinInfoName string) (board.GPIOPin, error) {
+	pinInt, err := strconv.Atoi(encoderPin)
+	if err != nil {
+		m.logger.Errorf("Can't parse the %v pin number: %v", encoderPinInfoName, encoderPin)
+		return nil, err
+	}
+	m.logger.Infof("pin for %v encoder set to %v", encoderPinInfoName, pinInt)
+	pin, err := m.b.GPIOPinByName(encoderPin)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get %v encoder pin %v for %v", encoderPinInfoName, pinInt, m.name)
+	}
+
+	pin.Set(ctx, false, nil)
+	m.logger.Info("%v encoder pin %v to low", encoderPinInfoName, pinInt)
+	return pin, nil
 }
 
 // DoCommand is a place to add additional commands to extend the motor API. This is optional.

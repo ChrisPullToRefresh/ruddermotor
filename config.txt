@@ -1,5 +1,5 @@
 {
   "board": "board-1",
   "encoderPinPort": "11",
-  "encoderPinPort": "13"
+  "encoderPinStarboard": "13"
 }

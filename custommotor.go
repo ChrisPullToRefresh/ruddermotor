@@ -47,7 +47,7 @@ const (
 	rudderBigTurnTime                    = time.Millisecond * 1000
 	rudderResetZeroTimeOut               = time.Millisecond * 1500
 	rudderResetZeroPollPauseMilliseconds = 10
-	encoderPollPauseMilliseconds         = 1000
+	encoderPollPauseMilliseconds         = 10
 	rudderPwmFrequency                   = 500
 	// ResetZeroPosition will pause for this length of time before returning
 	// to zero - this is the key of the value passed to the function

@@ -455,7 +455,7 @@ func resetAndRetrievePin(ctx context.Context, m *customMotor, encoderPin string,
 	}
 
 	pin.Set(ctx, false, nil)
-	m.logger.Info("%v encoder pin %v to low", encoderPinInfoName, pinInt)
+	m.logger.Infof("%v encoder pin %v set to low", encoderPinInfoName, pinInt)
 	return pin, nil
 }
 

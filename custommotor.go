@@ -258,10 +258,10 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	m.logger.Infof("ResetZeroPosition current power: %v", m.powerPct)
 	newPowerPct := m.powerPct
 	signNewPowerPct := 1.0
-	expectedVesselSide := port
+	expectedVesselSide := starboard
 	if m.rs == cwRudderState {
 		signNewPowerPct = -1.0
-		expectedVesselSide = starboard
+		expectedVesselSide = port
 	}
 	newPowerPct *= signNewPowerPct
 	m.logger.Infof("ResetZeroPosition new power: %v", newPowerPct)

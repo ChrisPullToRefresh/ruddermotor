@@ -201,9 +201,9 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 func (m *customMotor) pollingLoop(ctx context.Context) {
 	for {
 		m.mu.Lock()
-		m.logger.Infof("mutex locked in polling loop")
+		// m.logger.Infof("mutex locked in polling loop")
 		if m.encoderPinPort == nil || m.encoderPinStarboard == nil {
-			m.logger.Infof("Can't yet read vessel side because: m.encoderPinPort == nil || m.encoderPinStarboard == nil")
+			// m.logger.Infof("Can't yet read vessel side because: m.encoderPinPort == nil || m.encoderPinStarboard == nil")
 			continue
 		}
 
@@ -225,9 +225,9 @@ func (m *customMotor) pollingLoop(ctx context.Context) {
 		} else if isHighStarboard {
 			m.vesselSide = starboard
 		}
-		m.logger.Infof("current vessel side is %v", m.vesselSide)
+		// m.logger.Infof("current vessel side is %v", m.vesselSide)
 		m.mu.Unlock()
-		m.logger.Infof("mutex unlocked in polling loop")
+		// m.logger.Infof("mutex unlocked in polling loop")
 		time.Sleep(time.Millisecond * encoderPollPauseMilliseconds)
 	}
 }

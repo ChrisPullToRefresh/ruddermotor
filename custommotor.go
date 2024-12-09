@@ -274,12 +274,15 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 		m.mu.Lock()
 		select {
 		case <-timer:
+			m.mu.Unlock()
 			m.Stop(ctx, nil)
 			return fmt.Errorf("timed out of ResetZeroPosition after %v milliseconds", rudderResetZeroTimeOut)
 		default:
 			if m.vesselSide == center {
+				m.mu.Unlock()
 				m.Stop(ctx, nil)
 			} else if m.vesselSide != vesselSide(expectedVesselSide) {
+				m.mu.Unlock()
 				m.Stop(ctx, nil)
 				return fmt.Errorf("unexpected vessel side in ResetZeroPosition: %v", m.vesselSide)
 			}
@@ -295,7 +298,6 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 			// }
 			time.Sleep(time.Millisecond * rudderResetZeroPollPauseMilliseconds)
 		}
-		m.mu.Unlock()
 	}
 }
 
@@ -396,7 +398,7 @@ func (m *customMotor) SetRPM(ctx context.Context, rpm float64, extra map[string]
 
 // Stop implements motor.Motor.
 func (m *customMotor) Stop(ctx context.Context, extra map[string]interface{}) error {
-
+	m.logger.Infof("Stop() rudder")
 	m.stopRudder()
 	return nil
 }

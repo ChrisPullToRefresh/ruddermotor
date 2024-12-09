@@ -41,7 +41,7 @@ const (
 	rudderCcwPin = "32"
 
 	rudderStopPwmDutyCycle = 0.0
-	rudderPwmDutyCycle     = 0.5
+	rudderPwmDutyCycle     = 0.1
 	//rudderFastPwmDutyCycle               = 1.0
 	rudderSmallTurnTime                  = time.Millisecond * 500
 	rudderBigTurnTime                    = time.Millisecond * 1000

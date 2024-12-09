@@ -234,6 +234,7 @@ func (m *customMotor) pollingLoop(ctx context.Context) {
 
 // ResetZeroPosition implements motor.Motor.
 func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, extra map[string]interface{}) error {
+	m.logger.Infof("ResetZeroPosition called with arguments: %v", extra)
 	var pause = time.Millisecond * 0
 	for key, value := range extra {
 		switch key {
@@ -247,12 +248,13 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 			return fmt.Errorf("unknown extra key = %v", key)
 		}
 	}
+	m.logger.Infof("ResetZeroPosition will pause for %v milliseconds", pause)
 
 	m.logger.Infof("Begin ResetZeroPosition")
 	if (m.rs != ccwRudderState) && (m.rs != cwRudderState) {
 		return fmt.Errorf("can only call ResetZeroPosition when turning. current rudder state = %v", m.rs)
 	}
-	m.logger.Infof("current power: %v", m.powerPct)
+	m.logger.Infof("ResetZeroPosition current power: %v", m.powerPct)
 	newPowerPct := m.powerPct
 	signNewPowerPct := 1.0
 	expectedVesselSide := port
@@ -261,10 +263,13 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 		expectedVesselSide = starboard
 	}
 	newPowerPct *= signNewPowerPct
-	m.logger.Infof("new power: %v", newPowerPct)
+	m.logger.Infof("ResetZeroPosition new power: %v", newPowerPct)
 	m.Stop(ctx, nil)
+	m.logger.Infof("ResetZeroPosition initial stop")
 	time.Sleep(pause)
+	m.logger.Infof("ResetZeroPosition slept for %v milliseconds", pause)
 	m.SetPower(ctx, newPowerPct, nil)
+	m.logger.Infof("ResetZeroPosition set power to %v", newPowerPct)
 	// TODO: implement as a go function and store the cancel function in custommotor
 	// m.mu.Lock()
 	//startTicks := -1.0
@@ -272,6 +277,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	for {
 		// We stop when
 		m.mu.Lock()
+		m.logger.Infof("ResetZeroPosition mutex locked")
 		select {
 		case <-timer:
 			m.mu.Unlock()
@@ -280,6 +286,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 		default:
 			if m.vesselSide == center {
 				m.mu.Unlock()
+				m.logger.Infof("ResetZeroPosition in center, so completed and stopped")
 				m.Stop(ctx, nil)
 			} else if m.vesselSide != vesselSide(expectedVesselSide) {
 				m.mu.Unlock()
@@ -490,7 +497,6 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			}
 			m.SetPower(ctx, powerPct, nil)
 			time.Sleep(rudderTurnTime)
-			// TODO: why are we filling extra with values we don't return?
 			extra := make(map[string]interface{})
 			extra[pauseBeforeReset] = pauseBeforeResetValue
 			m.ResetZeroPosition(ctx, 0, extra)

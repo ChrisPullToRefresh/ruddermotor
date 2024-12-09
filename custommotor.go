@@ -472,11 +472,14 @@ func resetAndRetrievePin(ctx context.Context, m *customMotor, encoderPin string,
 // DoCommand is a place to add additional commands to extend the motor API. This is optional.
 // TODO: rename as appropriate (i.e., motorConfig)
 func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {
+	m.logger.Infof("DoCommand called with cmd=%v")
 	for key, value := range cmd {
 		switch key {
 		// "TurnThenCenter": "SmallLeft"
 		case rudderCommandTurnThenCenter:
+			m.logger.Infof("DoCommand key=%v", key)
 			command := value.(string)
+			m.logger.Infof("DoCommand command=%v", command)
 			powerPct := 0.0
 			rudderTurnTime := time.Millisecond * 0
 			switch command {
@@ -495,10 +498,14 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			default:
 				return nil, fmt.Errorf("unknown DoCommand value for %v = %v", key, value)
 			}
+			m.logger.Infof(
+				"DoCommand rudderCommandTurnThenCenter will set powerPct=%v and rudderTurnTime=%v", powerPct, rudderTurnTime)
 			m.SetPower(ctx, powerPct, nil)
 			time.Sleep(rudderTurnTime)
 			extra := make(map[string]interface{})
 			extra[pauseBeforeReset] = pauseBeforeResetValue
+			m.logger.Infof(
+				"DoCommand rudderCommandTurnThenCenter will call ResetZeroPosition with extra=%v", extra)
 			m.ResetZeroPosition(ctx, 0, extra)
 			return nil, nil
 		case "VesselSideQuery":

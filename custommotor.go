@@ -490,10 +490,21 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			}
 			m.SetPower(ctx, powerPct, nil)
 			time.Sleep(rudderTurnTime)
+			// TODO: why are we filling extra with values we don't return?
 			extra := make(map[string]interface{})
 			extra[pauseBeforeReset] = pauseBeforeResetValue
 			m.ResetZeroPosition(ctx, 0, extra)
 			return nil, nil
+		case "VesselSideQuery":
+			command := value.(string)
+			switch command {
+			case "Get":
+				extra := make(map[string]interface{})
+				extra["Value"] = m.vesselSide
+				return extra, nil
+			default:
+				return nil, fmt.Errorf("unknown DoCommand value for %v = %v", key, value)
+			}
 		default:
 			return nil, fmt.Errorf("unknown DoCommand key = %v ", key)
 		}

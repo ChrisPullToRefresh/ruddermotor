@@ -284,7 +284,8 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 		case <-timer:
 			m.mu.Unlock()
 			m.Stop(ctx, nil)
-			return fmt.Errorf("timed out of ResetZeroPosition after %v milliseconds", rudderResetZeroTimeOut)
+			m.logger.Errorf("timed out of ResetZeroPosition after %v milliseconds", rudderResetZeroTimeOut)
+			return fmt.Errorf("rudder timed out of ResetZeroPosition after %v milliseconds", rudderResetZeroTimeOut)
 		default:
 			if m.vesselSide == center {
 				m.mu.Unlock()
@@ -294,7 +295,8 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 			} else if m.vesselSide != vesselSide(expectedVesselSide) {
 				m.mu.Unlock()
 				m.Stop(ctx, nil)
-				return fmt.Errorf("unexpected vessel side in ResetZeroPosition: %v", m.vesselSide)
+				m.logger.Errorf("rudder on unexpected vessel side in ResetZeroPosition: %v", m.vesselSide)
+				return fmt.Errorf("rudder on unexpected vessel side in ResetZeroPosition: %v", m.vesselSide)
 			}
 			// ticks, _, err := m.encoderPort.Position(ctx, encoder.PositionTypeTicks, nil)
 			// if startTicks < 0 {

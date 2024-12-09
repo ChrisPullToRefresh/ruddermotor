@@ -235,6 +235,7 @@ func (m *customMotor) pollingLoop(ctx context.Context) {
 // ResetZeroPosition implements motor.Motor.
 func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, extra map[string]interface{}) error {
 	m.logger.Infof("ResetZeroPosition called with arguments: %v", extra)
+	m.logger.Infof("ResetZeroPosition starts with vesselSide = %v", m.vesselSide)
 	var pause = time.Millisecond * 0
 	for key, value := range extra {
 		switch key {
@@ -274,6 +275,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 	// m.mu.Lock()
 	//startTicks := -1.0
 	timer := time.After(rudderResetZeroTimeOut)
+	m.logger.Infof("ResetZeroPosition will timeout after rudderResetZeroTimeOut = %v", rudderResetZeroTimeOut)
 	for {
 		// We stop when
 		m.mu.Lock()
@@ -288,6 +290,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 				m.mu.Unlock()
 				m.logger.Infof("ResetZeroPosition in center, so completed and stopped")
 				m.Stop(ctx, nil)
+				return nil
 			} else if m.vesselSide != vesselSide(expectedVesselSide) {
 				m.mu.Unlock()
 				m.Stop(ctx, nil)
@@ -306,6 +309,7 @@ func (m *customMotor) ResetZeroPosition(ctx context.Context, offset float64, ext
 			time.Sleep(time.Millisecond * rudderResetZeroPollPauseMilliseconds)
 		}
 	}
+	//m.logger.Errorf("ResetZeroPosition should never reach this line of code!")
 }
 
 func (m *customMotor) setPin(pinName string, high bool) {
@@ -472,7 +476,7 @@ func resetAndRetrievePin(ctx context.Context, m *customMotor, encoderPin string,
 // DoCommand is a place to add additional commands to extend the motor API. This is optional.
 // TODO: rename as appropriate (i.e., motorConfig)
 func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {
-	m.logger.Infof("DoCommand called with cmd=%v")
+	// m.logger.Infof("DoCommand called with cmd=%v", cmd)
 	for key, value := range cmd {
 		switch key {
 		// "TurnThenCenter": "SmallLeft"

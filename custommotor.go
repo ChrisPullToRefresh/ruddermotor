@@ -340,13 +340,14 @@ func (m *customMotor) setPwmDutyCycle(pinName string, dutyCyclePct float64) {
 
 func (m *customMotor) resetRudder() {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	m.setPin(rudderCwPin, false)
 	m.setPin(rudderCcwPin, false)
 
 	m.setPwmFrequency(rudderCwPin, rudderPwmFrequency)
 	m.setPwmFrequency(rudderCcwPin, rudderPwmFrequency)
+	m.mu.Unlock()
+	m.stopRudder()
 }
 
 func (m *customMotor) stopRudder() {

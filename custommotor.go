@@ -507,10 +507,15 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 				"DoCommand rudderCommandTurnThenCenter will set powerPct=%v and rudderTurnTime=%v", powerPct, rudderTurnTime)
 			m.SetPower(ctx, powerPct, nil)
 			time.Sleep(rudderTurnTime)
+
+			// TODO: remove stop after uncommenting ResetToZero
+			m.Stop(ctx, nil)
+
 			extra := make(map[string]interface{})
 			extra[pauseBeforeReset] = pauseBeforeResetValue
 			m.logger.Infof(
 				"DoCommand rudderCommandTurnThenCenter will call ResetZeroPosition with extra=%v", extra)
+			// TODO: uncomment to restore reset to zero functionality
 			// m.ResetZeroPosition(ctx, 0, extra)
 			return nil, nil
 		case "VesselSideQuery":

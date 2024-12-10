@@ -198,6 +198,7 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 	return motor.Properties{}, errUnimplemented
 }
 
+// Don't lock with mutex because it should be able to poll without interference
 func (m *customMotor) pollingLoop(ctx context.Context) {
 	for {
 		// m.logger.Infof("mutex locked in polling loop")

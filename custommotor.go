@@ -511,7 +511,7 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			extra[pauseBeforeReset] = pauseBeforeResetValue
 			m.logger.Infof(
 				"DoCommand rudderCommandTurnThenCenter will call ResetZeroPosition with extra=%v", extra)
-			m.ResetZeroPosition(ctx, 0, extra)
+			// m.ResetZeroPosition(ctx, 0, extra)
 			return nil, nil
 		case "VesselSideQuery":
 			command := value.(string)

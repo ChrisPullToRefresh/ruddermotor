@@ -200,7 +200,6 @@ func (m *customMotor) Properties(ctx context.Context, extra map[string]interface
 
 func (m *customMotor) pollingLoop(ctx context.Context) {
 	for {
-		m.mu.Lock()
 		// m.logger.Infof("mutex locked in polling loop")
 		if m.encoderPinPort == nil || m.encoderPinStarboard == nil {
 			// m.logger.Infof("Can't yet read vessel side because: m.encoderPinPort == nil || m.encoderPinStarboard == nil")
@@ -226,7 +225,6 @@ func (m *customMotor) pollingLoop(ctx context.Context) {
 			m.vesselSide = starboard
 		}
 		// m.logger.Infof("current vessel side is %v", m.vesselSide)
-		m.mu.Unlock()
 		// m.logger.Infof("mutex unlocked in polling loop")
 		time.Sleep(time.Millisecond * encoderPollPauseMilliseconds)
 	}
@@ -512,7 +510,7 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			extra[pauseBeforeReset] = pauseBeforeResetValue
 			m.logger.Infof(
 				"DoCommand rudderCommandTurnThenCenter will call ResetZeroPosition with extra=%v", extra)
-			//m.ResetZeroPosition(ctx, 0, extra)
+			m.ResetZeroPosition(ctx, 0, extra)
 			return nil, nil
 		case "VesselSideQuery":
 			command := value.(string)

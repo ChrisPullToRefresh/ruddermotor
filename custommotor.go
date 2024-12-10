@@ -43,8 +43,8 @@ const (
 	rudderStopPwmDutyCycle = 0.0
 	rudderPwmDutyCycle     = 0.3
 	//rudderFastPwmDutyCycle               = 1.0
-	rudderSmallTurnTime                  = time.Millisecond * 500
-	rudderBigTurnTime                    = time.Millisecond * 1000
+	rudderSmallTurnTime                  = time.Millisecond * 250 // 500
+	rudderBigTurnTime                    = time.Millisecond * 500 // 1000
 	rudderResetZeroTimeOut               = time.Millisecond * 1500
 	rudderResetZeroPollPauseMilliseconds = 10
 	encoderPollPauseMilliseconds         = 10
@@ -512,7 +512,7 @@ func (m *customMotor) DoCommand(ctx context.Context, cmd map[string]interface{})
 			extra[pauseBeforeReset] = pauseBeforeResetValue
 			m.logger.Infof(
 				"DoCommand rudderCommandTurnThenCenter will call ResetZeroPosition with extra=%v", extra)
-			m.ResetZeroPosition(ctx, 0, extra)
+			//m.ResetZeroPosition(ctx, 0, extra)
 			return nil, nil
 		case "VesselSideQuery":
 			command := value.(string)
